@@ -19,10 +19,8 @@ const AUTHOR_URL: &str = "https://github.com/Fuzzdkk";
 // containers or rc4, so a single xor won't fully decode them.)
 const PRESETS: &[(&str, u8)] = &[
     ("Cisco AMP / Secure Endpoint", 0x77),
-    ("Microsoft MSE / Antimalware", 0xFF),
     ("SentinelOne", 0xFF),
     ("Microsoft Defender (macOS)", 0x25),
-    ("VIPRE", 0x33),
 ];
 
 fn main() -> eframe::Result<()> {

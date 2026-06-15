@@ -48,10 +48,8 @@ next to the key box that just fills in the right byte:
 | Vendor | Key |
 |--------|-----|
 | Cisco AMP / Secure Endpoint | `0x77` |
-| Microsoft MSE / Antimalware | `0xFF` |
 | SentinelOne | `0xFF` |
 | Microsoft Defender (macOS) | `0x25` |
-| VIPRE | `0x33` |
 
 Heads up: plenty of other vendors are *not* a plain single-byte XOR, so DeXOR
 won't fully decode them on its own. For example: ESET NQF (a byte math + `0xA5`
