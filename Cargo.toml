@@ -1,0 +1,22 @@
+[package]
+name = "dexor"
+version = "1.0.0"
+edition = "2021"
+description = "Tiny GUI to XOR-decode files. Drag files/folders in (or browse), pick a key + output folder, get the decoded files back."
+
+[[bin]]
+name = "dexor"
+path = "src/main.rs"
+
+[lib]
+name = "dexor"
+path = "src/lib.rs"
+
+[dependencies]
+eframe = "0.27"
+egui = "0.27"
+rfd = "0.14"
+
+[profile.release]
+opt-level = 3
+lto = true
