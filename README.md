@@ -98,7 +98,13 @@ cargo test
   purpose, so the tests can hit it directly without needing a display.
 - `src/main.rs`: the egui window. Drag/drop, browse buttons, key, output
   folder, a log.
+- `src/theme.rs`: the colours and font. Pulled the palette straight off
+  0xfuzz.com so it matches my site, dark slate with the cyan, JetBrains Mono
+  for the whole thing.
 - `tests/e2e.rs`: the does-it-really-work test described above.
+
+Font is JetBrains Mono, bundled in `assets/` under the SIL Open Font License
+(see `assets/JetBrainsMono-OFL.txt`).
 
 ---
 

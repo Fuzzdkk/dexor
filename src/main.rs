@@ -8,6 +8,8 @@ use std::path::PathBuf;
 use dexor::{collect_jobs, run_job, DEFAULT_XOR_KEY};
 use eframe::egui;
 
+mod theme;
+
 const AUTHOR: &str = "Fuzzdkk";
 const AUTHOR_URL: &str = "https://github.com/Fuzzdkk";
 
@@ -26,15 +28,19 @@ const PRESETS: &[(&str, u8)] = &[
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([560.0, 480.0])
-            .with_min_inner_size([420.0, 340.0])
+            .with_inner_size([580.0, 520.0])
+            .with_min_inner_size([440.0, 360.0])
+            .with_app_id("dexor")
             .with_drag_and_drop(true),
         ..Default::default()
     };
     eframe::run_native(
         "DeXOR",
         options,
-        Box::new(|_cc| Box::<App>::default()),
+        Box::new(|cc| {
+            theme::install(&cc.egui_ctx);
+            Box::<App>::default()
+        }),
     )
 }
 
@@ -111,21 +117,39 @@ impl eframe::App for App {
             }
         });
 
-        // little credit bar pinned to the bottom.
-        egui::TopBottomPanel::bottom("credit").show(ctx, |ui| {
-            ui.add_space(2.0);
-            ui.horizontal(|ui| {
-                ui.weak(format!("made by {AUTHOR} ·"));
-                ui.hyperlink_to(AUTHOR_URL, AUTHOR_URL);
+        // little credit bar pinned to the bottom, styled like a shell prompt.
+        egui::TopBottomPanel::bottom("credit")
+            .frame(egui::Frame::default().fill(theme::BG1).inner_margin(egui::Margin::symmetric(14.0, 6.0)))
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 6.0;
+                    ui.label(egui::RichText::new("$").color(theme::ACCENT).monospace());
+                    ui.label(egui::RichText::new(format!("made by {AUTHOR}")).color(theme::MUTED));
+                    ui.hyperlink_to(
+                        egui::RichText::new(AUTHOR_URL).color(theme::ACCENT_BRIGHT),
+                        AUTHOR_URL,
+                    );
+                });
             });
-            ui.add_space(2.0);
-        });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("DeXOR");
+            // title header.
+            ui.add_space(4.0);
+            ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 8.0;
+                ui.label(
+                    egui::RichText::new("DeXOR")
+                        .color(theme::TEXT_STRONG)
+                        .font(egui::FontId::new(26.0, theme::bold_font())),
+                );
+            });
+            ui.add_space(2.0);
             ui.label(
-                "XOR-decode files. Drag files or folders onto the window (or use \
-                 the browse buttons), set the key, and hit Decode.",
+                egui::RichText::new(
+                    "XOR-decode files. Drag files or folders onto the window (or use \
+                     the browse buttons), set the key, and hit Decode.",
+                )
+                .color(theme::TEXT),
             );
             ui.horizontal_wrapped(|ui| {
                 ui.spacing_mut().item_spacing.x = 0.0;
@@ -196,33 +220,52 @@ impl eframe::App for App {
                 }
             });
 
-            // Drop zone / pending list.
+            // Drop zone / pending list — cyan dashed-ish border when empty.
+            let active_drag = ctx.input(|i| !i.raw.hovered_files.is_empty());
+            let border = if active_drag { theme::ACCENT_BRIGHT } else { theme::BORDER };
             egui::Frame::none()
-                .fill(ui.visuals().extreme_bg_color)
+                .fill(theme::BG2)
+                .stroke(egui::Stroke::new(1.0, border))
                 .inner_margin(egui::Margin::same(12.0))
-                .rounding(6.0)
+                .rounding(8.0)
                 .show(ui, |ui| {
-                    ui.set_min_height(90.0);
+                    ui.set_min_height(96.0);
                     ui.set_width(ui.available_width());
                     if self.pending.is_empty() {
                         ui.vertical_centered(|ui| {
-                            ui.add_space(24.0);
-                            ui.weak("⬇  Drop files/folders here, or use the buttons above");
+                            ui.add_space(26.0);
+                            ui.label(
+                                egui::RichText::new("⬇  Drop files / folders here")
+                                    .color(theme::TEXT),
+                            );
+                            ui.label(
+                                egui::RichText::new("or use the buttons above")
+                                    .color(theme::MUTED)
+                                    .small(),
+                            );
                         });
                     } else {
-                        ui.label(format!("{} item(s) queued:", self.pending.len()));
+                        ui.label(
+                            egui::RichText::new(format!("{} item(s) queued", self.pending.len()))
+                                .color(theme::ACCENT_BRIGHT),
+                        );
                         for p in &self.pending {
-                            ui.monospace(p.display().to_string());
+                            ui.label(
+                                egui::RichText::new(format!("• {}", p.display())).color(theme::TEXT),
+                            );
                         }
                     }
                 });
 
-            ui.add_space(6.0);
+            ui.add_space(8.0);
             ui.horizontal(|ui| {
                 let can_run = !self.pending.is_empty();
-                if ui
-                    .add_enabled(can_run, egui::Button::new("▶ Decode"))
-                    .clicked()
+                let decode = egui::Button::new(
+                    egui::RichText::new("▶ Decode").color(theme::BG0).strong(),
+                )
+                .fill(theme::ACCENT)
+                .rounding(8.0);
+                if ui.add_enabled(can_run, decode).clicked()
                 {
                     self.decode();
                 }
@@ -237,13 +280,20 @@ impl eframe::App for App {
             });
 
             ui.separator();
-            ui.label("Log:");
+            ui.label(egui::RichText::new("Log").color(theme::MUTED));
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .stick_to_bottom(true)
                 .show(ui, |ui| {
                     for line in &self.log {
-                        ui.monospace(line);
+                        let color = match line.chars().next() {
+                            Some('✓') => theme::OK,
+                            Some('✗') => theme::ERR,
+                            Some('⚠') => theme::WARN,
+                            Some('→') => theme::ACCENT_BRIGHT,
+                            _ => theme::TEXT,
+                        };
+                        ui.label(egui::RichText::new(line).monospace().color(color));
                     }
                 });
         });
@@ -255,17 +305,18 @@ impl eframe::App for App {
                 egui::Id::new("drop_overlay"),
             ));
             let screen = ctx.screen_rect();
-            painter.rect_filled(
-                screen,
-                0.0,
-                egui::Color32::from_black_alpha(160),
+            painter.rect_filled(screen, 0.0, egui::Color32::from_black_alpha(180));
+            painter.rect_stroke(
+                screen.shrink(10.0),
+                10.0,
+                egui::Stroke::new(2.0, theme::ACCENT_BRIGHT),
             );
             painter.text(
                 screen.center(),
                 egui::Align2::CENTER_CENTER,
-                "Drop to queue",
-                egui::FontId::proportional(28.0),
-                egui::Color32::WHITE,
+                "⬇  Drop to queue",
+                egui::FontId::new(26.0, theme::bold_font()),
+                theme::ACCENT_BRIGHT,
             );
         }
     }

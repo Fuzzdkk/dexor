@@ -1,6 +1,6 @@
 [package]
 name = "dexor"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 description = "Tiny GUI to XOR-decode files. Drag files/folders in (or browse), pick a key + output folder, get the decoded files back."
 
