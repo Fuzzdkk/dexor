@@ -28,7 +28,6 @@ fn decodes_a_runnable_executable() {
 
     let dir = workdir("run");
     let scrambled_dir = dir.join("scrambled");
-    let out_dir = dir.join("decoded");
     fs::create_dir_all(&scrambled_dir).unwrap();
 
     // 1. Scramble: XOR the original with the key on disk.
@@ -39,9 +38,14 @@ fn decodes_a_runnable_executable() {
     assert_ne!(q, original_bytes, "scrambled file must differ from original");
 
     // 2. Decode via the exact library path the GUI calls (queue the folder).
+    //    Output should land in a sibling dexor-decoded/ folder, name prefixed.
     let jobs = collect_jobs(&[scrambled_dir.clone()]).unwrap();
     assert_eq!(jobs.len(), 1);
-    let written = run_job(&jobs[0], &out_dir, DEFAULT_XOR_KEY).unwrap();
+    assert_eq!(
+        jobs[0].dest,
+        dir.join("dexor-decoded/scrambled/dexor_sample.bin")
+    );
+    let written = run_job(&jobs[0], DEFAULT_XOR_KEY).unwrap();
 
     // 3. Byte-for-byte identical to the original.
     let decoded_bytes = fs::read(&written).unwrap();

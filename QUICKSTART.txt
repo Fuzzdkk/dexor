@@ -1,0 +1,37 @@
+DeXOR — quick start
+===================
+
+What it does
+------------
+Decodes single-byte XOR'd files (e.g. AV/EDR quarantine blobs) back to the
+original. XOR is symmetric, so it just re-applies the key and writes the file
+back out, runnable.
+
+Pick your binary
+----------------
+  Linux    ->  dexor-linux-x86_64        (chmod +x dexor-linux-x86_64, then run it)
+  Windows  ->  dexor-windows-x86_64.exe  (just double-click)
+
+Use it
+------
+  1. Run it.
+  2. Set the XOR key (hex). Defaults to 77 (Cisco AMP). Or pick a vendor from
+     the preset dropdown.
+  3. Add files: drag them onto the window, OR use the "Add files…" /
+     "Add folder…" buttons.
+  4. Hit Decode.
+
+Where the output goes
+---------------------
+A new "dexor-decoded" folder is created right next to each input. Decoded files
+are named dexor_<original> so it's obvious they came out of here. Dropped
+folders keep their structure under dexor-decoded/<foldername>/...
+
+Notes
+-----
+  - It's a GUI, so the Linux build needs a desktop session. On Wayland,
+    drag-and-drop can be flaky — just use the Add files/folder buttons.
+  - These are quarantined samples for a reason. Only handle them in a VM or
+    sandbox you don't care about.
+
+made by Fuzzdkk — https://github.com/Fuzzdkk

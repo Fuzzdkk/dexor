@@ -41,8 +41,6 @@ fn main() -> eframe::Result<()> {
 struct App {
     /// Files/folders queued but not yet processed.
     pending: Vec<PathBuf>,
-    /// Where decoded files are written.
-    output_dir: Option<PathBuf>,
     /// Single-byte XOR key.
     key: u8,
     log: Vec<String>,
@@ -54,7 +52,6 @@ impl Default for App {
     fn default() -> Self {
         Self {
             pending: Vec::new(),
-            output_dir: None,
             key: DEFAULT_XOR_KEY,
             log: Vec::new(),
             ok_count: 0,
@@ -65,10 +62,6 @@ impl Default for App {
 
 impl App {
     fn decode(&mut self) {
-        let Some(out) = self.output_dir.clone() else {
-            self.log.push("⚠ Pick an output folder first.".into());
-            return;
-        };
         if self.pending.is_empty() {
             self.log.push("⚠ Nothing queued yet.".into());
             return;
@@ -85,7 +78,7 @@ impl App {
             .push(format!("→ Decoding {} file(s) with key 0x{:02X}…", jobs.len(), self.key));
 
         for job in &jobs {
-            match run_job(job, &out, self.key) {
+            match run_job(job, self.key) {
                 Ok(dest) => {
                     self.ok_count += 1;
                     self.log.push(format!("✓ {}", dest.display()));
@@ -132,23 +125,17 @@ impl eframe::App for App {
             ui.heading("DeXOR");
             ui.label(
                 "XOR-decode files. Drag files or folders onto the window (or use \
-                 the browse buttons), pick a key + output folder, and the decoded \
-                 files land in your output folder.",
+                 the browse buttons), set the key, and hit Decode.",
             );
-            ui.separator();
-
-            // Output folder row.
-            ui.horizontal(|ui| {
-                if ui.button("📁 Choose output folder…").clicked() {
-                    if let Some(dir) = rfd::FileDialog::new().pick_folder() {
-                        self.output_dir = Some(dir);
-                    }
-                }
-                match &self.output_dir {
-                    Some(d) => ui.monospace(d.display().to_string()),
-                    None => ui.weak("(none selected)"),
-                };
+            ui.horizontal_wrapped(|ui| {
+                ui.spacing_mut().item_spacing.x = 0.0;
+                ui.label("Output goes into a new ");
+                ui.monospace(dexor::OUTPUT_DIR_NAME);
+                ui.label(" folder next to each input, each file named ");
+                ui.monospace(format!("{}<original>", dexor::FILENAME_PREFIX));
+                ui.label(".");
             });
+            ui.separator();
 
             // XOR key.
             ui.horizontal(|ui| {
@@ -232,7 +219,7 @@ impl eframe::App for App {
 
             ui.add_space(6.0);
             ui.horizontal(|ui| {
-                let can_run = !self.pending.is_empty() && self.output_dir.is_some();
+                let can_run = !self.pending.is_empty();
                 if ui
                     .add_enabled(can_run, egui::Button::new("▶ Decode"))
                     .clicked()
